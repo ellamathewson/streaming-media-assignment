@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
+/* Helper function to check if error code is being returned */
 const checkErrors = (err, response) => {
   if (err) {
     if (err.code === 'ENOENT') {
@@ -11,7 +12,8 @@ const checkErrors = (err, response) => {
   } return null;
 };
 
-const writeHead = (request, stats, response, file, contentType) => {
+/* Writes head and returns the created stream */
+const writeHead = (request, response, stats, file, contentType) => {
   let { range } = request.headers;
   if (!range) {
     /*
@@ -44,6 +46,7 @@ const writeHead = (request, stats, response, file, contentType) => {
   return fs.createReadStream(file, { start, end });
 };
 
+/* Sorts the stream depending on if its open or returning an error */
 const sortStream = (stream, response) => {
   stream.on('open', () => {
     stream.pipe(response);
@@ -56,36 +59,28 @@ const sortStream = (stream, response) => {
   return stream;
 };
 
-const loadFile = (response, request, filePath, mediaType) => {
+/* Passes everything into all the helper functions it calls */
+const loadFile = (request, response, filePath, mediaType) => {
   const file = path.resolve(__dirname, filePath);
 
   fs.stat(file, (err, stats) => {
     checkErrors(err, response);
-    const stream = writeHead(request, stats, response, file, mediaType);
+    const stream = writeHead(request, response, stats, file, mediaType);
     sortStream(stream, response);
   });
 };
 
+/* Gets the video file and passes in request and response */
 const getParty = (request, response) => {
-  loadFile(response, request, '../client/party.mp4', 'video/mp4');
-  /*
-    * asynchronous function. Takes a file object
-    and a callback function of waht to do next
-    When stat function loads the file, it will
-    then call the callback function that has been
-    passed in.
-    The callback of this function receives an err field
-    and a stats object. If the err field is not null,
-    then there was an error.
-    If the error code is ENOENT (Error No Entry), then the file
-    could not be found
-  */
+  loadFile(request, response, '../client/party.mp4', 'video/mp4');
 };
 
+/* Loads the mp3 file */
 const getBling = (request, response) => {
   loadFile(request, response, '../client/bling.mp3', 'audio/mpeg');
 };
 
+/* loads the other video file */
 const getBird = (request, response) => {
   loadFile(request, response, '../client/bird.mp4', 'video/mp4');
 };
